@@ -14,12 +14,18 @@ an online community, compared against a zero-shot **Groq
 
 ## Overview
 
-<!-- TODO: 2-4 sentences for a reader who hasn't seen planning.md. What does
-     TakeMeter do, for which community (r/wallstreetbets), what are the 4 labels
-     at a glance, and what question does the fine-tuned-vs-baseline comparison
-     answer? -->
+<!-- Draft below is a factual summary — edit into your own voice. -->
 
-_TODO_
+TakeMeter classifies the **purpose** of a r/wallstreetbets post into one of four
+discourse types — `trade_analysis`, `market_reaction_or_hype`, `meme_or_shitpost`,
+or `community_meta_or_news` — to measure how a community's discussion divides
+between substantive trading analysis and everything else. It compares a
+**fine-tuned DistilBERT** classifier (trained on 305 hand-labeled examples)
+against a **zero-shot Groq `llama-3.3-70b-versatile`** baseline on the same test
+set, to see how much a small fine-tuned model can close the gap to a large
+general LLM on a subjective, imbalanced, 4-way task.
+
+_TODO: tweak wording / add your one-line takeaway._
 
 > **Demo video:** _TODO — link (3–5 min: 3–5 posts classified with label +
 > confidence, one correct prediction narrated, one wrong prediction narrated, and
@@ -87,80 +93,117 @@ and the Colab notebook.
 ## Model + training
 
 - **Base model:** `distilbert-base-uncased` with a 4-class classification head.
-- **Split:** stratified 70 / 15 / 15 (train / val / test), `random_state=42`,
-  done in the notebook. Test set sizes: _TODO from Section 2 output._
+- **Split:** stratified 70 / 15 / 15, `random_state=42` (notebook). Sizes:
+  **305 train / 66 validation / 66 test**.
 - **Tokenization:** max length 256.
-- **Hyperparameters (notebook defaults):** 3 epochs, learning rate 2e-5, train
-  batch size 16, weight decay 0.01, warmup 50 steps.
 - **Compute:** Google Colab free **T4 GPU**.
 
-<!-- TODO: If you changed ANY hyperparameter from the defaults above, state what
-     you changed and WHY. If you kept the defaults, say so. -->
+**Hyperparameters and the changes I made.** The notebook defaults (3 epochs,
+unweighted loss, select-best-by-accuracy) produced a model that **collapsed onto
+the two largest classes** — `meme_or_shitpost` and `community_meta_or_news` both
+scored F1 0.00, and overall accuracy (0.561) was far below the baseline. I made
+three changes to fix the minority-class collapse:
 
-_TODO: note any hyperparameter changes (or "kept defaults")._
+| Change | From → To | Why |
+|--------|-----------|-----|
+| Loss | unweighted → **inverse-frequency class-weighted** cross-entropy | Penalize errors on rare classes so they aren't ignored. Weights from the train split only (no test leakage): meme ≈ 2.06, others ≈ 0.67–1.02. |
+| Epochs | 3 → **6** | 305 training examples need more passes to learn the minority classes; `load_best_model_at_end` guards overfitting. |
+| Model selection | best by `accuracy` → best by **`macro_f1`** | Accuracy rewards predicting the majority class; macro-F1 forces all 4 classes to matter. |
+
+Learning rate (2e-5), batch size (16), weight decay (0.01), warmup (50) kept at
+defaults. _TODO (optional): if you re-tune further, note it here._
 
 ---
 
 ## Evaluation report
 
-All numbers below come from running the Colab notebook on the **same locked test
-set** (`evaluation_results.json` + `confusion_matrix.png`, committed to this
-repo). Fill every `_TODO_` from your actual output — do not estimate.
+Both models evaluated on the same locked **66-example test set** (after the
+class-weighting fix; see [Model + training](#model--training)).
+
+> ⚠️ **Baseline caveat — read before comparing.** The Groq baseline run hit the
+> `llama-3.3-70b-versatile` **daily token rate limit** partway through, so **7 of
+> 66** test examples returned errors and counted as unparseable. The baseline
+> metrics below are therefore computed on only **59/66** examples, while the
+> fine-tuned metrics use all 66. **The two are not a perfectly matched
+> comparison.** _TODO (recommended): re-run Section 5 after the limit resets so
+> the baseline covers all 66, then update these numbers._
 
 ### Headline metrics
 
-| Model | Accuracy | Macro-F1 | Unparseable |
-|-------|---------:|---------:|------------:|
-| Groq zero-shot baseline (`llama-3.3-70b-versatile`) | _TODO_ | _TODO_ | _TODO_ / _TODO_ |
-| Fine-tuned DistilBERT | _TODO_ | _TODO_ | — |
+| Model | Accuracy | Macro-F1 | Scored on | Unparseable |
+|-------|---------:|---------:|:---------:|------------:|
+| Groq zero-shot baseline (`llama-3.3-70b-versatile`) | 0.847 | 0.82 | 59 / 66 | 7 |
+| Fine-tuned DistilBERT (class-weighted, 6 epochs) | 0.742 | 0.70 | 66 / 66 | — |
 
-### Per-class metrics — Groq baseline
+### Per-class metrics — Groq baseline (on 59 parseable examples)
 
-<!-- From the Section 5 classification_report. -->
+| Label | Precision | Recall | F1 | Support |
+|-------|----------:|-------:|---:|--------:|
+| `trade_analysis` | 0.88 | 0.94 | 0.91 | 16 |
+| `market_reaction_or_hype` | 0.81 | 0.96 | 0.88 | 23 |
+| `meme_or_shitpost` | 0.83 | 0.71 | 0.77 | 7 |
+| `community_meta_or_news` | 0.89 | 0.62 | 0.73 | 13 |
+| **macro avg** | 0.85 | 0.81 | **0.82** | 59 |
 
-| Label | Precision | Recall | F1 |
-|-------|----------:|-------:|---:|
-| `trade_analysis` | _TODO_ | _TODO_ | _TODO_ |
-| `market_reaction_or_hype` | _TODO_ | _TODO_ | _TODO_ |
-| `meme_or_shitpost` | _TODO_ | _TODO_ | _TODO_ |
-| `community_meta_or_news` | _TODO_ | _TODO_ | _TODO_ |
+### Per-class metrics — Fine-tuned DistilBERT (on all 66 examples)
 
-### Per-class metrics — Fine-tuned DistilBERT
-
-<!-- From the Section 4 classification_report. -->
-
-| Label | Precision | Recall | F1 |
-|-------|----------:|-------:|---:|
-| `trade_analysis` | _TODO_ | _TODO_ | _TODO_ |
-| `market_reaction_or_hype` | _TODO_ | _TODO_ | _TODO_ |
-| `meme_or_shitpost` | _TODO_ | _TODO_ | _TODO_ |
-| `community_meta_or_news` | _TODO_ | _TODO_ | _TODO_ |
+| Label | Precision | Recall | F1 | Support |
+|-------|----------:|-------:|---:|--------:|
+| `trade_analysis` | 0.71 | 1.00 | 0.83 | 17 |
+| `market_reaction_or_hype` | 0.86 | 0.72 | 0.78 | 25 |
+| `meme_or_shitpost` | 0.57 | 0.50 | 0.53 | 8 |
+| `community_meta_or_news` | 0.71 | 0.62 | 0.67 | 16 |
+| **macro avg** | 0.71 | 0.71 | **0.70** | 66 |
 
 ### Confusion matrix — Fine-tuned DistilBERT
 
-Text version (the `confusion_matrix.png` is committed as a supplementary copy).
-Rows = true label, columns = predicted label; the diagonal is correct.
+Rows = true label, columns = predicted label; the diagonal is correct. Counts
+below are reconstructed from the per-class metrics + the printed wrong-prediction
+list; **two of the 17 errors were truncated in the notebook output**, so two
+off-diagonal cells are marked `?` — read the exact values off the committed
+`confusion_matrix.png` and replace the `?`s.
 
 | true \ pred | trade_analysis | market_reaction_or_hype | meme_or_shitpost | community_meta_or_news |
 |-------------|---------:|---------:|---------:|---------:|
-| **trade_analysis** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
-| **market_reaction_or_hype** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
-| **meme_or_shitpost** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
-| **community_meta_or_news** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
+| **trade_analysis** | 17 | 0 | 0 | 0 |
+| **market_reaction_or_hype** | 1 | 18 | 2 | 3 (+1 `?`) |
+| **meme_or_shitpost** | 0 | 3 | 4 | 1 |
+| **community_meta_or_news** | 5 | 0 | 0 | 10 (+1 `?`) |
+
+(Confirmed diagonal: 17 / 18 / 4 / 10 = 49 correct of 66 = 0.742 accuracy.)
 
 ### Did it hit the success criteria?
 
-Check against [planning.md](planning.md) §8 (accuracy ≥ 0.75, macro-F1 ≥ 0.70,
-every per-class F1 ≥ 0.65, `trade_analysis` precision ≥ 0.75):
+Against [planning.md](planning.md) §8:
 
-- _TODO: state met / not-met for each clause, citing the numbers above._
+| Criterion | Target | Fine-tuned result | Met? |
+|-----------|--------|-------------------|:----:|
+| Accuracy | ≥ 0.75 | 0.742 | ❌ (just under) |
+| Macro-F1 | ≥ 0.70 | 0.70 | ✅ |
+| Every per-class F1 | ≥ 0.65 | meme = 0.53 | ❌ |
+| `trade_analysis` precision | ≥ 0.75 | 0.71 | ❌ |
+| Beats Groq baseline | yes | loses 0.742 vs 0.847 | ❌ |
+
+So the fine-tuned model **met the macro-F1 bar but did not beat the baseline**
+and missed three of the five clauses. _TODO: add a sentence on how you read this
+overall (e.g. respectable for 305 training examples, but a 70B zero-shot LLM is a
+hard baseline to beat on a 4-way subjective task)._
 
 ### Discussion
 
-<!-- TODO: What do the numbers + matrix show? Where does fine-tuning beat (or
-     lose to) the baseline, and by how much? -->
+The class-weighting fix worked: it rescued the two minority classes from F1 0.00
+(broken run) to **0.53 (meme)** and **0.67 (community_meta)**, lifting macro-F1
+from 0.35 → 0.70. _TODO: expand — which boundary still drives most errors (see
+the confusion matrix: `community_meta_or_news → trade_analysis` = 5, and
+`market_reaction_or_hype` scatters into all three others), and why the fine-tuned
+model still trails the zero-shot baseline._
 
-_TODO_
+<!-- TODO: also discuss `trade_analysis` recall = 1.00 with precision 0.71 — the
+     model over-predicts trade_analysis (it's the catch-all for anything with
+     tickers/reasoning-like structure). Is that a labeling boundary issue or a
+     data issue? -->
+
+_TODO: finish the discussion in your own words._
 
 ---
 
@@ -173,34 +216,40 @@ analysis; answer the guiding questions for each.
 
 **Wrong predictions reviewed:** _TODO / TODO total test examples._
 
-For each of the 3 examples below, fill: the post (excerpt), true vs. predicted
-label, the model's confidence, and the analysis.
+**Wrong predictions reviewed:** 17 / 66 test examples. The three below are real
+errors from the run (text/labels/confidence are filled in); the **analysis is
+yours to write** — answer each guiding question.
 
-### Failure 1
-- **Post:** _TODO_
-- **True → Predicted (confidence):** _TODO_ → _TODO_ (_TODO_)
-- **Which boundary failed?** _TODO — which label pair, and is it the dominant
-  off-diagonal in the confusion matrix?_
-- **Why is that boundary hard?** _TODO — ambiguous language, sarcasm, short post,
-  topic-signals-one-label-but-structure-signals-another, etc._
-- **Labeling problem or data/prompt problem?** _TODO — did you label similar
-  posts consistently? If yes, it's the data distribution / boundary; if no, it's
-  annotation inconsistency._
-- **What would fix it?** _TODO_
-
-### Failure 2
-- **Post:** _TODO_
-- **True → Predicted (confidence):** _TODO_ → _TODO_ (_TODO_)
-- **Which boundary failed?** _TODO_
-- **Why is that boundary hard?** _TODO_
+### Failure 1 — the dominant error pattern
+- **Post:** *"What broker to use now? Once the squeeze is over in GME and I feel comfortable moving my money I'm leaving both RH and TDA. What brokers would you recommend…"*
+- **True → Predicted (confidence):** `community_meta_or_news` → `trade_analysis` (0.57)
+- **Which boundary failed?** `community_meta_or_news` → `trade_analysis` — this is
+  the **largest off-diagonal** (5 of 16 community_meta posts went to
+  trade_analysis).
+- **Why is that boundary hard?** _TODO — the post mentions tickers (GME) and
+  brokers/positions, so the surface looks like trading even though the intent is a
+  platform/community question. Is it the ticker presence?_
 - **Labeling problem or data/prompt problem?** _TODO_
 - **What would fix it?** _TODO_
 
-### Failure 3
-- **Post:** _TODO_
-- **True → Predicted (confidence):** _TODO_ → _TODO_ (_TODO_)
-- **Which boundary failed?** _TODO_
-- **Why is that boundary hard?** _TODO_
+### Failure 2 — a meme miss
+- **Post:** *"I feel retarded as f***, is AMC going to the moon or am I fuk"*
+- **True → Predicted (confidence):** `meme_or_shitpost` → `market_reaction_or_hype` (0.45)
+- **Which boundary failed?** `meme_or_shitpost` → `market_reaction_or_hype` (the
+  meme class's most common confusion; 3 of 8 memes went to hype).
+- **Why is that boundary hard?** _TODO — short, slang-heavy, "to the moon" reads
+  as hype but the intent is a self-deprecating joke. Low confidence (0.45)._
+- **Labeling problem or data/prompt problem?** _TODO — note that meme has only
+  ~37 train / 8 test examples._
+- **What would fix it?** _TODO_
+
+### Failure 3 — hype vs. analysis
+- **Post:** *"All The Fuckery Only Galvanizes Us More… What the shorts aren't realizing is th[at]…"*
+- **True → Predicted (confidence):** `market_reaction_or_hype` → `trade_analysis` (0.46)
+- **Which boundary failed?** `market_reaction_or_hype` → `trade_analysis`.
+- **Why is that boundary hard?** _TODO — it has an argument-like structure
+  ("what the shorts aren't realizing") wrapped around what is really a rallying
+  cry. Relates to your planning §5 hardest edge case._
 - **Labeling problem or data/prompt problem?** _TODO_
 - **What would fix it?** _TODO_
 
@@ -209,18 +258,23 @@ label, the model's confidence, and the analysis.
 ## Sample classifications
 
 3–5 example posts run through the **fine-tuned** model, each with the predicted
-label and confidence. (From the Section 4 output / wrong-prediction cell.)
+label and confidence. Rows 1–3 are real misclassifications from the run (verified
+text + confidence). For the **correct** examples (rows 4–5) the model didn't
+print text for correct cases, so pull two from the notebook — e.g. re-run a small
+cell printing correct predictions, or add `print(test_df.iloc[idx]['text'])` for
+indices where pred == true.
 
 | # | Post (excerpt) | Predicted label | Confidence | Correct? |
 |---|----------------|-----------------|-----------:|:--------:|
-| 1 | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
-| 2 | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
-| 3 | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
-| 4 | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
-| 5 | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
+| 1 | "What broker to use now? … leaving both RH and TDA. What brokers would you recommend" | `trade_analysis` | 0.57 | ❌ (true: community_meta_or_news) |
+| 2 | "I feel retarded as f***, is AMC going to the moon or am I fuk" | `market_reaction_or_hype` | 0.45 | ❌ (true: meme_or_shitpost) |
+| 3 | "Us little guys are holding too!! Numbers red pretty 🦍🦍💎💎👐👐🚀🚀🚀" | `meme_or_shitpost` | 0.46 | ❌ (true: market_reaction_or_hype) |
+| 4 | _TODO: a correctly-predicted post_ | _TODO_ | _TODO_ | ✅ |
+| 5 | _TODO: a correctly-predicted post_ | _TODO_ | _TODO_ | ✅ |
 
 **Why one correct prediction is reasonable:** _TODO — pick a correctly-predicted
-row above and explain in a sentence why the label fits the post's content._
+row (4 or 5) and explain in a sentence why the label fits the post's content
+(e.g. a DD post with short-interest reasoning correctly → `trade_analysis`)._
 
 ---
 
