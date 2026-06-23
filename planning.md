@@ -97,6 +97,34 @@ Decision rule: If the post contains a clear trade thesis with reasoning or evide
 
 Example: A post titled “GME rocket fuel loaded, apes never sell” with no body text would be labeled `market_reaction_or_hype` because it is mainly a hype/holding message, not analysis. A post with the same title but a long body explaining short interest, catalysts, risk, and position sizing would be labeled `trade_analysis`.
 
+### Difficult examples encountered during annotation
+
+These are real cases from annotation that gave me genuine pause (Milestone 3).
+
+**Difficult example 1: Fake/ironic DD vs. genuine trade analysis**
+- **Row / ID:** candidates_trade_analysis row 11, `o64enf`
+- **Post type:** A “Marble ETF” post describes picking stocks using marbles and a gravity-style game.
+- **Possible labels:** `trade_analysis` vs. `meme_or_shitpost`
+- **Why it is difficult:** It uses DD language and claims to select stocks, but the method is intentionally absurd and entertainment-driven rather than a serious trading thesis.
+- **Final label:** `meme_or_shitpost`
+- **Decision rule used:** If a post uses DD structure but the actual reasoning is intentionally absurd, parody-like, or mainly for entertainment, label it `meme_or_shitpost` instead of `trade_analysis`.
+
+**Difficult example 2: Simple squeeze math vs. hype**
+- **Row / ID:** candidates_trade_analysis row 14, `mcf7u1`
+- **Post type:** The post estimates how many GME/AMC shares WSB users might collectively hold and argues that if people keep holding, sellers will have to pay extreme prices.
+- **Possible labels:** `trade_analysis` vs. `market_reaction_or_hype`
+- **Why it is difficult:** The post uses rough numbers and a float-ownership argument, but the tone and purpose are also strongly “hold forever” hype.
+- **Final label:** `trade_analysis`
+- **Decision rule used:** If the post gives a concrete market mechanism, even with rough math, label it `trade_analysis`; if it only says to hold or go to the moon without reasoning, label it `market_reaction_or_hype`.
+
+**Difficult example 3: YOLO update vs. meme/shitpost**
+- **Row / ID:** candidates_trade_analysis row 58, `lgx0fn`
+- **Post type:** An AMD YOLO update presents positions and calls itself DD, but the body relies heavily on joking language about tendy gods, Valhalla, and hype rather than actual analysis.
+- **Possible labels:** `trade_analysis` vs. `meme_or_shitpost` vs. `market_reaction_or_hype`
+- **Why it is difficult:** It includes real positions and a ticker, but the main function is comedic performance and YOLO entertainment, not a reasoned stock argument.
+- **Final label:** `meme_or_shitpost`
+- **Decision rule used:** A real ticker or position does not make a post `trade_analysis`; if the main value of the post is absurdity, parody, or comic community performance, label it `meme_or_shitpost`.
+
 ## 6. Data Collection and Annotation Plan
 
 The dataset already contains about 53,200 Reddit posts from r/wallstreetbets. For this project, I will annotate a smaller balanced sample instead of using all rows immediately.
