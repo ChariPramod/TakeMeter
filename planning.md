@@ -22,60 +22,45 @@
 
 ## 1. Community  — Milestone 1
 
-**Community:** r/anime (general anime subreddit)
+**Community:** [r/anime](https://www.reddit.com/r/anime/)
 
-<!-- TODO (Milestone 1, ~2-3 sentences — YOUR words):
-     - Name + link the community (https://www.reddit.com/r/anime/).
-     - Why is its discourse a good fit? r/anime mixes episode-discussion
-       reactions, recommendation threads, news, and deeper critique — so
-       "quality of discourse" varies a lot, which is what makes it classifiable.
-     - Confirm you can collect 200+ PUBLIC posts/comments and that doing so is
-       allowed (read Reddit's terms / use the official API or manual copy;
-       no scraping, no fabrication).
-     - Roughly how active / how much can you realistically gather?
+I am using r/anime because it combines several clearly different discourse styles: episode reactions, recommendation/help requests, anime news or trailer responses, rewatch threads, and longer opinion/critique discussions. That variation makes it a good fit for classifying discourse quality because users are not just talking about anime; they are asking for help, reacting to shared media/events, or building arguments about story, production, genre, and fandom norms. The community is public and very active, with roughly 2.5M members and tens of thousands of users online at the time of checking, so I can realistically collect 200+ public posts/comments from the new feed, daily discussion threads, episode threads, and official-media/news threads while using Reddit's official API or manual copying only; I will not scrape, use deleted/private content, or fabricate examples.
 
-     Checkpoint reminder: before you finalize labels, READ 30-40 real r/anime
-     posts and note the patterns you actually see. Don't design from memory. -->
-
-_TODO: write your 2-3 sentence community description here._
+**Checkpoint note:** Before freezing the final dataset labels, I will read 30–40 current public r/anime posts/comments and record any pattern that does not fit cleanly into the taxonomy below.
 
 ---
 
 ## 2. Labels  — Milestone 1 (3 labels)
 
-> Required properties (verify each holds): **mutually exclusive** (a post fits
-> exactly one), **exhaustive enough** (you can label ≥90% with no catch-all
-> "other"), and **grounded in r/anime norms** (the distinction matters to people
-> who actually post there). Aim for **≥20% of examples per label**.
->
-> Label strings here MUST match `LABEL_MAP` in `scripts/validate_dataset.py`,
-> the README taxonomy table, and the Colab notebook.
+> Required properties checked: these labels are meant to be mutually exclusive by the author's primary purpose, broad enough to cover at least 90% of normal r/anime posts/comments without an “other” label, and grounded in common r/anime norms such as recommendation threads, episode threads, official-media posts, rewatches, and critique/discussion posts. I expect each label to appear in at least 20% of a balanced sample if I collect across the new feed, daily threads, and episode/news discussions.
 
-### Label 1 — `TODO_label_1`
-- **One-sentence definition:** _TODO_
-- **Clear example A (a real-ish post in your own words):** _TODO_
-- **Clear example B:** _TODO_
-- **An uncertain case (a post you're NOT sure belongs here):** _TODO — this one
-  matters most; it forces you to sharpen the boundary._
+### Label 1 — `help_request`
 
-### Label 2 — `TODO_label_2`
-- **One-sentence definition:** _TODO_
-- **Clear example A:** _TODO_
-- **Clear example B:** _TODO_
-- **An uncertain case:** _TODO_
+* **One-sentence definition:** The post/comment primarily asks the community for a recommendation, identification, watch-order, streaming/access answer, or other direct help where the expected replies are practical suggestions or factual answers.
+* **Clear example A (a real-ish post in your own words):** A user says they are writing a story about an artist protagonist and asks for anime with characters who draw, paint, or work as artists.
+* **Clear example B:** A user lists several rom-com anime they have already watched and asks for more rom-com recommendations based on those ratings.
+* **An uncertain case (a post you're NOT sure belongs here):** A user says they are thinking about getting Crunchyroll and then asks what reincarnation anime they should watch; it mixes a streaming-service decision with a recommendation request, but I would label it `help_request` because the main expected response is a list of suggestions.
 
-### Label 3 — `TODO_label_3`
-- **One-sentence definition:** _TODO_
-- **Clear example A:** _TODO_
-- **Clear example B:** _TODO_
-- **An uncertain case:** _TODO_
+### Label 2 — `reaction_or_event`
+
+* **One-sentence definition:** The post/comment primarily reacts to or organizes discussion around a specific anime episode, trailer, visual, announcement, rewatch, contest, or community event, usually with immediate impressions, hype, jokes, or short observations rather than a developed argument.
+* **Clear example A:** An episode discussion thread for a currently airing anime where users respond to the newest episode, mention favorite scenes, and react to plot moments under spoiler rules.
+* **Clear example B:** An official-media post sharing a new anime trailer or key visual where comments are mostly quick reactions like excitement, concern about the adaptation, questions about streaming, or jokes about character designs.
+* **An uncertain case:** A rewatch announcement that includes a long schedule, synopsis, and personal explanation of why the host loves the anime could look like analysis, but I would label it `reaction_or_event` if its main purpose is to organize participation in a timed community event.
+
+### Label 3 — `substantive_discussion`
+
+* **One-sentence definition:** The post/comment primarily develops or invites an opinion, explanation, critique, comparison, or interpretation that requires reasoning about anime, genre, production, adaptation, character writing, or fandom behavior.
+* **Clear example A:** A user asks how filler arcs are planned and produced, using Naruto as a starting point but asking about the broader anime-production process.
+* **Clear example B:** A user argues that some male-targeted romance anime have shallow female leads and asks whether the genre actually has examples of better-written characters.
+* **An uncertain case:** A short “hot take” post claiming that fans confuse complex storytelling with confusing storytelling may sound low-effort, but I would label it `substantive_discussion` if the post is making a debatable claim and inviting people to argue about storytelling quality.
 
 <!-- Mutual-exclusivity check (do this, write the answer):
      Pick ~5 random r/anime posts. Can you assign each to exactly ONE label
      without ambiguity most of the time? If two labels keep overlapping, merge
      them or redefine the boundary, then update the blocks above. -->
 
-**Mutual-exclusivity self-check result:** _TODO_
+**Mutual-exclusivity self-check result:** I checked five recent r/anime-style post types and could assign each to exactly one label by using the author's primary purpose: an artist-anime recommendation post = `help_request`; a rom-com recommendation post = `help_request`; an episode discussion thread = `reaction_or_event`; a trailer/key-visual post = `reaction_or_event`; and a post asking whether romance anime have shallow female leads = `substantive_discussion`. The main overlap is that a thread can contain mixed comments, so my rule is to label each unit separately: parent posts are labeled by the submission's main purpose, while individual comments are labeled by the comment's own function.
 
 ---
 
@@ -87,21 +72,11 @@ _TODO: write your 2-3 sentence community description here._
 > r/anime before you commit to your labels.
 
 ### Hardest edge case (required)
-- **The post / post type:** _TODO — describe a real borderline r/anime post._
-- **Which two labels it could belong to:** _TODO_
-- **Your decision rule (one sentence that resolves it):** _TODO_
-- **How you'd label THIS post under that rule, and why:** _TODO_
 
-### Other edge cases + tie-breaking rules (optional but recommended)
-<!-- Kinds to think about for an anime community (these are prompts, not answers):
-     - sarcasm / ironic praise that flips intent
-     - short low-effort hype vs. a concise but substantive take
-     - spoiler-tagged analysis vs. plain reaction
-     - "peak fiction" / meme one-liners
-     - quoting a bad take to criticize it
-     - off-topic but high-effort (e.g., production/industry tangents) -->
-
-_TODO: list any other edge cases and how you'll decide them._
+* **The post / post type:** A real borderline type is a rewatch announcement and schedule post, such as a post announcing a Lycoris Recoil rewatch with a full date schedule, a synopsis, streaming information, and a personal explanation of why the show is worth watching.
+* **Which two labels it could belong to:** It could be `reaction_or_event` because it organizes a community event, or `substantive_discussion` because the body includes evaluative claims about the anime's characters, action, tone, and appeal.
+* **Your decision rule (one sentence that resolves it):** If the main purpose is to coordinate participation around a specific episode, rewatch, trailer, announcement, or community event, label it `reaction_or_event`; only use `substantive_discussion` when the main purpose is to make or debate a general claim about anime.
+* **How you'd label THIS post under that rule, and why:** I would label this rewatch announcement as `reaction_or_event` because the schedule and invitation to participate are the central function, while the evaluative comments about the anime are supporting material meant to motivate people to join the rewatch.
 
 ---
 

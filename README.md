@@ -39,11 +39,11 @@ definitions, examples, and the edge-case decision rule). These must match
 `LABEL_MAP` in [scripts/validate_dataset.py](scripts/validate_dataset.py) and the
 Colab notebook.
 
-| Label | Definition |
+| Label | Definition (short — see [planning.md](planning.md) §2 for full) |
 |-------|------------|
-| _TODO_label_1_ | _TODO_ |
-| _TODO_label_2_ | _TODO_ |
-| _TODO_label_3_ | _TODO_ |
+| `help_request` | Primarily asks the community for a recommendation, ID, watch-order, or streaming/access answer — expected replies are practical suggestions or facts. |
+| `reaction_or_event` | Primarily reacts to or organizes discussion around a specific episode, trailer, visual, announcement, rewatch, or event — immediate impressions/hype over developed argument. |
+| `substantive_discussion` | Primarily develops or invites an opinion, critique, comparison, or interpretation that requires reasoning about anime, production, or fandom. |
 
 ---
 
