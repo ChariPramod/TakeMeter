@@ -213,6 +213,27 @@ def main() -> int:
                     warnings,
                 )
 
+    # --- Annotation provenance (informational; for AI-usage disclosure) ----
+    # If you use the `notes` column to flag LLM pre-labeling provenance (see
+    # planning.md AI Tool Plan §B, e.g. "prelabeled:groq;changed"), this prints
+    # a count so your README disclosure ("X changed vs. Y kept") is auditable.
+    # Purely informational — never a failure or warning.
+    if "notes" in df.columns:
+        notes = df["notes"].fillna("").astype(str).str.lower()
+        prelabeled = notes.str.contains("prelabeled")
+        if prelabeled.any():
+            print("\nAnnotation provenance (from `notes`)")
+            n_pre = int(prelabeled.sum())
+            n_changed = int(notes.str.contains("changed").sum())
+            n_kept = int(notes.str.contains("kept").sum())
+            print(f"  pre-labeled rows: {n_pre}/{len(df)} ({n_pre / len(df):.1%})")
+            print(f"    of those, marked changed: {n_changed}, marked kept: {n_kept}")
+            if n_changed + n_kept != n_pre:
+                print(
+                    "    note: some pre-labeled rows lack a changed/kept marker; "
+                    "tag every reviewed row for a complete disclosure."
+                )
+
     return _summary(hard_failures, warnings)
 
 
