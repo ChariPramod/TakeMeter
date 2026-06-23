@@ -3,4 +3,3 @@ pandas
 scikit-learn
 groq
 python-dotenv
-praw            # official Reddit API client (scripts/collect_reddit.py)

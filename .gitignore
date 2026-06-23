@@ -2,6 +2,10 @@
 .env
 .env.local
 
+# Large raw dataset (re-downloadable; not the annotated output).
+# data/dataset.csv (your annotations) IS tracked.
+data/reddit_wsb.csv
+
 # Model checkpoints / fine-tuning artifacts
 *.bin
 *.safetensors

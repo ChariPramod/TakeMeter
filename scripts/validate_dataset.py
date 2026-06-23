@@ -18,15 +18,16 @@ import sys
 import pandas as pd
 
 # ---------------------------------------------------------------------------
-# r/anime label taxonomy (3 labels — see planning.md §2 for full definitions).
+# r/wallstreetbets label taxonomy (4 labels — see planning.md §3 / §10).
 # Keys = the EXACT label strings in the CSV's `label` column.
-# Values = the integer class id used by the model (0, 1, 2 — contiguous).
-# This MUST stay in sync with planning.md §2, the README table, and the Colab
+# Values = the integer class id used by the model (0..3 — contiguous).
+# This MUST stay in sync with planning.md, the README table, and the Colab
 # notebook's LABEL_MAP.
 LABEL_MAP = {
-    "help_request": 0,
-    "reaction_or_event": 1,
-    "substantive_discussion": 2,
+    "trade_analysis": 0,
+    "market_reaction_or_hype": 1,
+    "meme_or_shitpost": 2,
+    "community_meta_or_news": 3,
 }
 # ---------------------------------------------------------------------------
 

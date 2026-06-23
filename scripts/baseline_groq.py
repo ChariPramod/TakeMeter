@@ -38,13 +38,51 @@ REQUEST_DELAY_S = 0.1  # notebook sleeps 0.1s between requests (free-tier limits
 RANDOM_STATE = 42
 
 # ---------------------------------------------------------------------------
-# TODO (student): write the system prompt that instructs the model how to
-# classify discourse quality. This is YOUR work — describe the task and your
-# labels, and tell the model to respond with EXACTLY one label string from your
-# taxonomy (the parser below does a substring match, longest-label-first).
-#
-# Tip: the model's reply should contain one of your label strings verbatim.
-SYSTEM_PROMPT = """TODO: write your classification system prompt here."""
+# Classification prompt (zero-shot baseline). Transcribed from the student's
+# planning.md §3 label design. KEEP THIS IDENTICAL to the notebook's
+# SYSTEM_PROMPT so the local baseline equals the Colab baseline. Label names
+# must stay exactly as listed (the parser matches them).
+SYSTEM_PROMPT = """
+You are classifying posts from the r/wallstreetbets subreddit, where users
+discuss stock and option trading. Assign each post to exactly ONE of the
+following four categories, based on the author's primary purpose.
+
+trade_analysis: The post's main purpose is to explain, justify, or evaluate a
+stock, option, market move, or trading strategy using reasoning, evidence,
+numbers, screenshots, ticker discussion, or a clear thesis.
+Example: "Why I think GME is undervalued: short interest is still high, here are
+the catalysts and the price action, and this is the position I'm taking."
+
+market_reaction_or_hype: The post's main purpose is to react emotionally to
+market movement, hype a ticker, celebrate gains, panic about losses, or
+encourage buying/selling without substantial analysis.
+Example: "GME TO THE MOON, HOLD THE LINE 🚀🚀"
+
+meme_or_shitpost: The post's main purpose is humor, sarcasm, community slang,
+absurdity, or entertainment rather than serious trading discussion.
+Example: "My portfolio is a burning dumpster and I am the raccoon inside it."
+
+community_meta_or_news: The post's main purpose is to discuss the subreddit,
+moderation, daily discussion threads, media attention, platform issues, rules,
+or external news about WallStreetBets rather than a specific personal trade.
+Example: "How has this sub changed since the news coverage after the GameStop
+saga? Curious what longtime members think."
+
+Decision rule for mixed posts: label by the author's primary purpose. If a post
+makes a real trade thesis with reasoning, it is trade_analysis; if it mainly
+pushes emotion or group action with little reasoning, it is
+market_reaction_or_hype; if the joke format is the main point, it is
+meme_or_shitpost.
+
+Respond with ONLY the label name.
+Do not explain your reasoning.
+
+Valid labels:
+trade_analysis
+market_reaction_or_hype
+meme_or_shitpost
+community_meta_or_news
+"""
 # ---------------------------------------------------------------------------
 
 

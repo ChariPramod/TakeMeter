@@ -1,212 +1,191 @@
-# TakeMeter — Planning Spec
+# planning.md
 
-> **TakeMeter** is a fine-tuned DistilBERT text classifier that scores discourse
-> quality in **r/anime**, compared against a zero-shot Groq
-> `llama-3.3-70b-versatile` baseline.
->
-> **This is my design document (CodePath AI201 Project 3, Milestone 2).** It must
-> answer six questions with specific, committed answers — not placeholders —
-> before any labeled example is collected: Community, Labels, Hard edge cases,
-> Data collection plan, Evaluation metrics, and Definition of success, plus an
-> AI Tool Plan. Sections still marked _TODO_ are mine to fill in; I am not
-> letting tooling design my labels, collect/annotate my data, or write my
-> analysis.
+## Project Title
 
-**Milestone 2 completion checklist (tick when each holds):**
-- [ ] §1–§6 answered with specific, committed answers (no _TODO_ left)
-- [ ] Label definitions precise enough two people would agree on most examples
-- [ ] §6 success criteria state a numeric threshold, not "it should work well"
-- [ ] AI Tool Plan makes an explicit decision on all three uses
+WallStreetBets Reddit Post Discourse Classification
 
----
+## 1. Community
 
-## 1. Community  — Milestone 1
+The community chosen for this project is r/wallstreetbets, a Reddit community where users discuss stock trading, options trading, market news, gains, losses, memes, and speculative investment ideas. This community is a strong fit for a classification task because the discourse is active, text-heavy, and varies sharply in quality: some posts contain detailed trading analysis, some are emotional reactions to market movement, some are memes or hype posts, and some are about subreddit/community events or moderation.
 
-**Community:** [r/anime](https://www.reddit.com/r/anime/)
+These distinctions matter because WallStreetBets users treat different kinds of posts very differently. A due-diligence style post is expected to contain reasoning, evidence, ticker analysis, risk discussion, or a trade thesis, while a hype post or meme post is judged more by entertainment value and community tone. A useful classifier should separate posts that are trying to inform trading decisions from posts that are mainly reacting, joking, or discussing the subreddit itself.
 
-I am using r/anime because it combines several clearly different discourse styles: episode reactions, recommendation/help requests, anime news or trailer responses, rewatch threads, and longer opinion/critique discussions. That variation makes it a good fit for classifying discourse quality because users are not just talking about anime; they are asking for help, reacting to shared media/events, or building arguments about story, production, genre, and fandom norms. The community is public and very active, with roughly 2.5M members and tens of thousands of users online at the time of checking, so I can realistically collect 200+ public posts/comments from the new feed, daily discussion threads, episode threads, and official-media/news threads while using Reddit's official API or manual copying only; I will not scrape, use deleted/private content, or fabricate examples.
+## 2. Dataset Columns and How I Will Use Them
 
-**Checkpoint note:** Before freezing the final dataset labels, I will read 30–40 current public r/anime posts/comments and record any pattern that does not fit cleanly into the taxonomy below.
+The original dataset contains these columns:
 
----
+| Column      | Meaning                              | Use in this project                                          |
+| ----------- | ------------------------------------ | ------------------------------------------------------------ |
+| `id`        | Reddit post ID                       | Keep as a unique identifier. Do not use as a model feature.  |
+| `title`     | Title of the Reddit post             | Main text input for classification.                          |
+| `body`      | Body/self-text of the post           | Secondary text input. Missing values will be replaced with an empty string. |
+| `score`     | Reddit score/upvotes minus downvotes | Metadata only. It can be used for analysis, but not as a main text feature because it may leak popularity instead of discourse type. |
+| `url`       | URL attached to the post             | Keep for traceability. Do not use directly as a model feature. |
+| `comms_num` | Number of comments                   | Metadata only. It can show engagement, but it should not decide the discourse label. |
+| `created`   | Unix timestamp                       | Metadata only. Useful for sorting or trend analysis.         |
+| `timestamp` | Human-readable date/time             | Metadata only. Useful for trend analysis and train/test splitting by time. |
 
-## 2. Labels  — Milestone 1 (3 labels)
+I will create two new columns:
 
-> Required properties checked: these labels are meant to be mutually exclusive by the author's primary purpose, broad enough to cover at least 90% of normal r/anime posts/comments without an “other” label, and grounded in common r/anime norms such as recommendation threads, episode threads, official-media posts, rewatches, and critique/discussion posts. I expect each label to appear in at least 20% of a balanced sample if I collect across the new feed, daily threads, and episode/news discussions.
+| New column | Meaning                                                      |
+| ---------- | ------------------------------------------------------------ |
+| `text`     | Combined text field created as `title + " " + body`.         |
+| `label`    | Human-assigned discourse label. This is the target variable for the classifier. |
 
-### Label 1 — `help_request`
+The classifier should mainly use `text` as the input. The `label` column will contain exactly one of the four label strings defined below.
 
-* **One-sentence definition:** The post/comment primarily asks the community for a recommendation, identification, watch-order, streaming/access answer, or other direct help where the expected replies are practical suggestions or factual answers.
-* **Clear example A (a real-ish post in your own words):** A user says they are writing a story about an artist protagonist and asks for anime with characters who draw, paint, or work as artists.
-* **Clear example B:** A user lists several rom-com anime they have already watched and asks for more rom-com recommendations based on those ratings.
-* **An uncertain case (a post you're NOT sure belongs here):** A user says they are thinking about getting Crunchyroll and then asks what reincarnation anime they should watch; it mixes a streaming-service decision with a recommendation request, but I would label it `help_request` because the main expected response is a list of suggestions.
+## 3. Labels
 
-### Label 2 — `reaction_or_event`
+I will use four mutually exclusive labels. Each post should receive exactly one label based on the author's primary purpose.
 
-* **One-sentence definition:** The post/comment primarily reacts to or organizes discussion around a specific anime episode, trailer, visual, announcement, rewatch, contest, or community event, usually with immediate impressions, hype, jokes, or short observations rather than a developed argument.
-* **Clear example A:** An episode discussion thread for a currently airing anime where users respond to the newest episode, mention favorite scenes, and react to plot moments under spoiler rules.
-* **Clear example B:** An official-media post sharing a new anime trailer or key visual where comments are mostly quick reactions like excitement, concern about the adaptation, questions about streaming, or jokes about character designs.
-* **An uncertain case:** A rewatch announcement that includes a long schedule, synopsis, and personal explanation of why the host loves the anime could look like analysis, but I would label it `reaction_or_event` if its main purpose is to organize participation in a timed community event.
+### Label 1: `trade_analysis`
 
-### Label 3 — `substantive_discussion`
+Definition: A post belongs to `trade_analysis` when its main purpose is to explain, justify, or evaluate a stock, option, market move, or trading strategy using reasoning, evidence, numbers, screenshots, ticker discussion, or a clear thesis.
 
-* **One-sentence definition:** The post/comment primarily develops or invites an opinion, explanation, critique, comparison, or interpretation that requires reasoning about anime, genre, production, adaptation, character writing, or fandom behavior.
-* **Clear example A:** A user asks how filler arcs are planned and produced, using Naruto as a starting point but asking about the broader anime-production process.
-* **Clear example B:** A user argues that some male-targeted romance anime have shallow female leads and asks whether the genre actually has examples of better-written characters.
-* **An uncertain case:** A short “hot take” post claiming that fans confuse complex storytelling with confusing storytelling may sound low-effort, but I would label it `substantive_discussion` if the post is making a debatable claim and inviting people to argue about storytelling quality.
+Clear example A: A user writes a long post explaining why they believe GME is undervalued, discusses short interest, price action, catalysts, and says what position they are taking.
 
-<!-- Mutual-exclusivity check (do this, write the answer):
-     Pick ~5 random r/anime posts. Can you assign each to exactly ONE label
-     without ambiguity most of the time? If two labels keep overlapping, merge
-     them or redefine the boundary, then update the blocks above. -->
+Clear example B: A user analyzes AMC call options, explains their expiration date, strike price, risk, and why they think the trade could work.
 
-**Mutual-exclusivity self-check result:** I checked five recent r/anime-style post types and could assign each to exactly one label by using the author's primary purpose: an artist-anime recommendation post = `help_request`; a rom-com recommendation post = `help_request`; an episode discussion thread = `reaction_or_event`; a trailer/key-visual post = `reaction_or_event`; and a post asking whether romance anime have shallow female leads = `substantive_discussion`. The main overlap is that a thread can contain mixed comments, so my rule is to label each unit separately: parent posts are labeled by the submission's main purpose, while individual comments are labeled by the comment's own function.
+Uncertain case: A post says “NOK will moon next week because volume is increasing” with one chart and very little explanation. I would label it `trade_analysis` only if the post gives a real reason or evidence; otherwise, it belongs in `market_reaction_or_hype`.
 
----
+### Label 2: `market_reaction_or_hype`
 
-## 3. Hard edge cases  — Milestone 1 checkpoint
+Definition: A post belongs to `market_reaction_or_hype` when its main purpose is to react emotionally to market movement, hype a ticker, celebrate gains, panic about losses, or encourage buying/selling without substantial analysis.
 
-> The checkpoint requires you to name the **single hardest** edge case — a post
-> type that genuinely sits between two of your labels — and state the **decision
-> rule** you'll use so annotation stays consistent. Find one such REAL post in
-> r/anime before you commit to your labels.
+Clear example A: A user posts “GME TO THE MOON, HOLD THE LINE” with no real explanation beyond excitement.
 
-### Hardest edge case (required)
+Clear example B: A user reacts to AMC dropping sharply and writes that everyone is doomed or that they are still holding no matter what.
 
-* **The post / post type:** A real borderline type is a rewatch announcement and schedule post, such as a post announcing a Lycoris Recoil rewatch with a full date schedule, a synopsis, streaming information, and a personal explanation of why the show is worth watching.
-* **Which two labels it could belong to:** It could be `reaction_or_event` because it organizes a community event, or `substantive_discussion` because the body includes evaluative claims about the anime's characters, action, tone, and appeal.
-* **Your decision rule (one sentence that resolves it):** If the main purpose is to coordinate participation around a specific episode, rewatch, trailer, announcement, or community event, label it `reaction_or_event`; only use `substantive_discussion` when the main purpose is to make or debate a general claim about anime.
-* **How you'd label THIS post under that rule, and why:** I would label this rewatch announcement as `reaction_or_event` because the schedule and invitation to participate are the central function, while the evaluative comments about the anime are supporting material meant to motivate people to join the rewatch.
+Uncertain case: A post celebrates a large gain and briefly mentions the trade that caused it. I would label it `market_reaction_or_hype` if the focus is the emotional reaction or celebration, not a reasoned explanation of the trade.
 
----
+### Label 3: `meme_or_shitpost`
 
-## 4. Data collection plan
+Definition: A post belongs to `meme_or_shitpost` when its main purpose is humor, sarcasm, community slang, absurdity, or entertainment rather than serious trading discussion.
 
-Must answer: **where** I collect, **how many per label**, and **what I do if a
-label is underrepresented after 200 examples.**
+Clear example A: A user posts a joke title comparing their portfolio to a burning dumpster with no meaningful trading claim.
 
-- **Source + method:** r/anime (https://www.reddit.com/r/anime/). _TODO —
-  confirm your exact collection method (official Reddit API via a registered app,
-  or manual copy of public posts/comments) and that it respects Reddit's terms.
-  No automated scraping, no fabricated rows._
-- **Target counts:** **300 examples total, ~100 per label** across 3 classes.
-  This is well above the 200 minimum and keeps every class far above the 20%
-  floor, with buffer for rows dropped during validation (empty/duplicate/short).
-- **Storage:** `data/dataset.csv` with columns `text,label,notes`. The `notes`
-  column also records pre-labeling provenance — see AI Tool Plan §B.
-- **Annotation process:** _TODO — label against the §2 definitions; with the
-  pre-label-and-review workflow (§B), the LLM proposes a label, I confirm or
-  override every row, and the final label is my judgment. Note how you stay
-  consistent across 300 rows (e.g. re-read definitions periodically; revisit any
-  row you hesitate on)._
-- **Underrepresentation contingency:** if any class is below the 20% floor
-  (i.e. < 60 rows) after the first pass, do **targeted collection** — pull
-  additional posts from thread types known to produce that class until it reaches
-  ~100 — rather than down-sampling the others. If a class stays hard to fill, it
-  is a signal the boundary in §2 is wrong; merge/redefine per §2 instead of
-  forcing thin data. _TODO: confirm which thread types you'll target for top-up._
+Clear example B: A user writes a fake motivational speech about losing money on options for comedic effect.
 
----
+Uncertain case: A meme uses a real ticker like GME or AMC and also contains a bullish claim. I would label it `meme_or_shitpost` if the main purpose is clearly the joke or meme format, not the trading claim.
 
-## 5. Evaluation metrics
+### Label 4: `community_meta_or_news`
 
-Must answer: **which metrics, and why they're right for THIS task.** Accuracy
-alone is not enough — say what else and why.
+Definition: A post belongs to `community_meta_or_news` when its main purpose is to discuss the subreddit, moderation, daily discussion threads, media attention, platform issues, rules, or external news about WallStreetBets rather than a specific personal trade or thesis.
 
-- **Primary metric: macro-F1.** Averaging F1 equally across the three classes
-  (rather than weighting by frequency) means a class that drifts below the 20%
-  floor still counts fully toward the score. Raw accuracy can look high while
-  one r/anime discourse type is barely recognized, so accuracy alone would hide
-  exactly the failure I care about; macro-F1 won't.
-- **Per-class precision / recall / F1 (required).** Reported for every label so
-  I can see *which* class the model handles worst — not just an aggregate. I care
-  most about **recall on the minority/most-confused class** (it's the one most
-  likely to be silently dropped). _TODO: name which of your 3 labels you most
-  want high recall on, once defined._
-- **Confusion matrix.** 3×3, true (rows) × predicted (cols). I'll inspect which
-  specific pair gets confused; a heavy off-diagonal between two labels means
-  their §2 boundary is blurry in practice. _TODO: name the pair you expect to be
-  most confused, given your definitions._
-- **Baseline handling:** unparseable Groq outputs are **excluded from the metric
-  and reported as a separate count** (the local/Colab harness already does this).
-  A high unparseable count is itself a finding about the zero-shot prompt, so I
-  report it rather than silently dropping it.
-- **Same test set:** both models are evaluated on the identical seeded test split
-  (stratified 70/15/15, `random_state=42`) — see `scripts/baseline_groq.py`,
-  which reproduces the notebook's split exactly so local == Colab.
+Clear example A: A daily trading discussion thread tells users to keep general market discussion in one place and links to subreddit resources.
 
----
+Clear example B: A post discusses news coverage of WallStreetBets after the GameStop event and asks how the subreddit has changed.
 
-## 6. Definition of success
+Uncertain case: A post shares news about a company and users discuss whether to buy the stock. I would label it `community_meta_or_news` only if the focus is the news item or community response; if the author uses the news to argue for a trade, I would label it `trade_analysis`.
 
-Must state a **specific, objectively checkable threshold** — not "it should work
-well." At the end I should be able to say yes/no against these.
+## 4. Mutual Exclusivity Rule
 
-- **Quantitative bar:** the fine-tuned model reaches **macro-F1 ≥ 0.70** on the
-  test set **AND** beats the zero-shot Groq baseline by **≥ 0.05 macro-F1**.
-- **Per-class floor:** **no class has recall < 0.55**, so success can't be
-  carried by one easy class while another is effectively ignored.
-- **"Good enough to deploy" bar:** at macro-F1 ≥ 0.70 with no collapsed class,
-  the classifier is useful as an *assistive* signal in a real r/anime tool (e.g.
-  flagging/sorting discourse types for a human), not as a fully automated
-  moderator — three-way subjective discourse labeling on ~300 examples won't be
-  reliable enough to act on without review, and the success bar reflects that.
-- **Self-check — are these objectively pass/fail?** Yes. Each clause is a number
-  the evaluation in §5 produces directly (macro-F1, the baseline delta, and the
-  minimum per-class recall), so at the end I can mark each as met/not-met without
-  judgment calls. _(I may tighten these after seeing the baseline numbers, and
-  will note any change here.)_
+Each post will be labeled by its primary purpose, not by every topic it mentions. If a post includes multiple elements, I will ask what the author mainly wants the community to do:
 
----
+- If the author wants readers to understand or evaluate a trade idea, label it `trade_analysis`.
+- If the author wants readers to react emotionally, hold, buy, panic, celebrate, or hype, label it `market_reaction_or_hype`.
+- If the author mainly wants to entertain or joke, label it `meme_or_shitpost`.
+- If the author mainly wants to discuss the subreddit, rules, daily threads, media coverage, or general community context, label it `community_meta_or_news`.
 
-## AI Tool Plan
+## 5. Hard Edge Cases
 
-Per Milestone 2, this section makes an **explicit decision** about the three
-places AI tooling actually helps on this project. (The scaffolding/tooling
-boundary below is fixed; the per-use decisions are mine.)
+The hardest edge case is a post that uses meme language while also making a real trading claim about a stock such as GME, AMC, NOK, or BB.
 
-### A. Label stress-testing — _planned: yes_
-Once my §2 definitions are drafted, I'll give the AI my label definitions + the
-§3 edge case and ask it to generate 5–10 posts that sit on the boundary between
-two labels. If I can't classify its outputs cleanly under my own rules, my
-definitions are too loose and I'll tighten §2 **before** annotating 200 examples.
-- _TODO: paste/summarize the stress-test results and any definition changes here._
-- Note: these generated posts are a **test of my definitions only** — they are
-  NOT added to `data/dataset.csv`.
+This type of post could belong to either `meme_or_shitpost` or `market_reaction_or_hype`. It may also sometimes look like `trade_analysis` if it mentions a ticker, price target, or position.
 
-### B. Annotation assistance — _decision: LLM pre-labels, I review every row_
-I will use an LLM to **pre-label** a batch of collected r/anime posts, then
-**review and correct every row myself** against my §2 definitions. The label of
-record is my reviewed judgment, not the model's suggestion.
-- **Tool:** _TODO — which model/tool you use for pre-labeling (e.g. Groq
-  llama-3.3-70b-versatile, to match the baseline)._
-- **Tracking convention:** the `notes` column flags provenance so it's auditable
-  and disclosable — e.g. `prelabeled:groq;changed` if I overrode the suggestion,
-  `prelabeled:groq;kept` if I agreed, blank/`manual` if I labeled from scratch.
-  _TODO: confirm the exact tokens you'll use._
-- **Disclosure:** I will report in the README AI usage section that rows were
-  LLM-pre-labeled and 100% human-reviewed, with the count changed vs. kept.
-- _Guardrail:_ pre-labeling could bias my annotations toward the model. I will
-  review against the definitions, not the suggestion, and (stretch) an
-  inter-annotator check would catch systematic drift.
+Decision rule: If the post contains a clear trade thesis with reasoning or evidence, label it `trade_analysis`; if it mainly pushes emotion or group action with little reasoning, label it `market_reaction_or_hype`; if the joke format is the main point, label it `meme_or_shitpost`.
 
-### C. Failure analysis — _planned: yes, with my own verification_
-After evaluation, I'll give the AI my list of wrong predictions (text, true,
-predicted) and ask it to surface **patterns** (e.g. "misclassifies short hype as
-X," "confuses label_Y with label_Z on spoiler-tagged posts").
-- **What I'll look for:** systematic confusions, length effects, keyword
-  shortcuts vs. the intended distinction (the learned-vs-intended question).
-- **Verification:** any pattern the AI proposes I confirm myself against actual
-  examples before it goes in the evaluation report — the AI proposes, I verify.
+Example: A post titled “GME rocket fuel loaded, apes never sell” with no body text would be labeled `market_reaction_or_hype` because it is mainly a hype/holding message, not analysis. A post with the same title but a long body explaining short interest, catalysts, risk, and position sizing would be labeled `trade_analysis`.
 
----
+## 6. Data Collection and Annotation Plan
 
-### Fixed boundary (not negotiable)
+The dataset already contains about 53,200 Reddit posts from r/wallstreetbets. For this project, I will annotate a smaller balanced sample instead of using all rows immediately.
 
-**AI tooling is used for:** repo scaffolding, local tooling
-(`scripts/validate_dataset.py`, `scripts/baseline_groq.py`), and the three uses
-above (stress-testing, pre-labeling-with-review, failure-pattern surfacing).
+I will begin by reading 30–40 random posts from the dataset before finalizing the labels. After that, I will manually annotate at least 200 examples. I will aim for a balanced dataset with about 50 posts per label:
 
-**Entirely my own work (not AI-authored):** label design and definitions, the
-final label of record on every row, the baseline system prompt, and all
-analysis, the evaluation writeup, and reflections.
+| Label                     | Target count |
+| ------------------------- | -----------: |
+| `trade_analysis`          |           50 |
+| `market_reaction_or_hype` |           50 |
+| `meme_or_shitpost`        |           50 |
+| `community_meta_or_news`  |           50 |
+
+If one label is underrepresented after the first 200 examples, I will oversample likely candidates using keywords and patterns. For example, posts containing “DD,” “calls,” “puts,” “position,” or ticker symbols may help find `trade_analysis`; posts containing “moon,” “hold,” “diamond hands,” or “tendies” may help find `market_reaction_or_hype`; posts with very short joke-like titles may help find `meme_or_shitpost`; and daily discussion or moderator-style posts may help find `community_meta_or_news`.
+
+I will still manually verify every label. Keyword search will only help find candidates; it will not automatically assign the final label.
+
+## 7. Evaluation Metrics
+
+Accuracy alone is not enough because the labels may be imbalanced and some mistakes are more important than others. I will use these metrics:
+
+| Metric              | Why it matters                                               |
+| ------------------- | ------------------------------------------------------------ |
+| Accuracy            | Gives the overall percentage of correct predictions.         |
+| Macro F1-score      | Treats all labels equally, which matters if some labels are less common. |
+| Per-label precision | Shows whether the model is over-predicting a label.          |
+| Per-label recall    | Shows whether the model is missing a label.                  |
+| Confusion matrix    | Shows which labels are being confused, especially `meme_or_shitpost` vs. `market_reaction_or_hype` and `trade_analysis` vs. `market_reaction_or_hype`. |
+
+Macro F1-score is especially important because I want the classifier to work across all discourse types, not only the most common one.
+
+## 8. Definition of Success
+
+A useful classifier should reach at least 75% accuracy and at least 0.70 macro F1-score on a held-out test set. It should also achieve at least 0.65 F1-score on every individual label so that it is not ignoring smaller or harder categories.
+
+For a real community tool, I would consider the model good enough if it can reliably separate serious trading analysis from hype, memes, and community-meta posts. The most important practical success condition is that `trade_analysis` should have high precision, ideally 0.75 or higher, because users looking for serious discussion should not be shown mostly memes or hype posts.
+
+## 9. AI Tool Plan
+
+### Label stress-testing
+
+Before annotating all 200 examples, I will give an AI tool my four label definitions and ask it to generate 5–10 borderline WallStreetBets-style posts. I will specifically ask for examples that sit between:
+
+- `trade_analysis` and `market_reaction_or_hype`
+- `market_reaction_or_hype` and `meme_or_shitpost`
+- `community_meta_or_news` and `trade_analysis`
+
+If I cannot classify those generated examples consistently, I will tighten the definitions and decision rules before continuing annotation.
+
+### Annotation assistance
+
+I may use an LLM to pre-label a batch of examples, but I will treat those labels only as suggestions. Every pre-labeled example will still be reviewed manually before it enters the final training dataset.
+
+If I use AI pre-labeling, I will add another column called `ai_prelabeled` with values `yes` or `no`, and possibly another column called `ai_suggested_label`. The final human-reviewed label will remain in the `label` column.
+
+### Failure analysis
+
+After training the model, I will collect the incorrect predictions from the validation or test set and give them to an AI tool to identify common failure patterns. I will look for repeated issues such as:
+
+- Meme posts being mistaken for hype posts.
+- Hype posts being mistaken for trade analysis because they mention ticker symbols.
+- News posts being mistaken for trade analysis because they discuss a company.
+- Very short titles being hard to classify without body text.
+
+I will verify these patterns myself by reading the misclassified examples directly before including them in the final project write-up.
+
+## 10. Final Label Map
+
+The final label map for the project is:
+
+```python
+LABEL_MAP = {
+    "trade_analysis": 0,
+    "market_reaction_or_hype": 1,
+    "meme_or_shitpost": 2,
+    "community_meta_or_news": 3,
+}
+```
+
+The final dataset should contain at least these columns:
+
+| Column      | Required? | Description                                                  |
+| ----------- | --------- | ------------------------------------------------------------ |
+| `id`        | Yes       | Original Reddit post ID.                                     |
+| `title`     | Yes       | Original post title.                                         |
+| `body`      | Yes       | Original post body, with missing values replaced by empty strings. |
+| `text`      | Yes       | Combined title and body text used as model input.            |
+| `label`     | Yes       | One of the four final labels.                                |
+| `score`     | Optional  | Metadata for analysis.                                       |
+| `comms_num` | Optional  | Metadata for analysis.                                       |
+| `timestamp` | Optional  | Metadata for trend/time analysis.                            |
+| `url`       | Optional  | Link for traceability.                                       |

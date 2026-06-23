@@ -23,10 +23,11 @@ _TODO_
 
 ## Data collection
 
-<!-- TODO: Where the data came from (r/anime — link + collection method), how you
-     collected and annotated it, the final per-class + total counts, AND at least
-     3 examples you found genuinely difficult to label and what you decided.
-     (Plan lives in planning.md §4; hardest edge case in §3.) -->
+<!-- TODO: Where the data came from (downloaded public r/wallstreetbets dataset —
+     source/link + that you annotated a balanced sample yourself), how you
+     annotated it, the final per-class + total counts, AND at least 3 examples
+     you found genuinely difficult to label and what you decided.
+     (Plan lives in planning.md §6; hardest edge case in §5.) -->
 
 _TODO_
 
@@ -34,16 +35,17 @@ _TODO_
 
 ## Label taxonomy
 
-Community: **r/anime**. Three labels (see [planning.md](planning.md) §2 for full
-definitions, examples, and the edge-case decision rule). These must match
-`LABEL_MAP` in [scripts/validate_dataset.py](scripts/validate_dataset.py) and the
-Colab notebook.
+Community: **r/wallstreetbets**. Four labels (see [planning.md](planning.md) §3
+for full definitions, examples, and the edge-case decision rule). These must
+match `LABEL_MAP` in [scripts/validate_dataset.py](scripts/validate_dataset.py)
+and the Colab notebook.
 
-| Label | Definition (short — see [planning.md](planning.md) §2 for full) |
+| Label | Definition (short — see [planning.md](planning.md) §3 for full) |
 |-------|------------|
-| `help_request` | Primarily asks the community for a recommendation, ID, watch-order, or streaming/access answer — expected replies are practical suggestions or facts. |
-| `reaction_or_event` | Primarily reacts to or organizes discussion around a specific episode, trailer, visual, announcement, rewatch, or event — immediate impressions/hype over developed argument. |
-| `substantive_discussion` | Primarily develops or invites an opinion, critique, comparison, or interpretation that requires reasoning about anime, production, or fandom. |
+| `trade_analysis` | Primarily explains/justifies/evaluates a stock, option, market move, or strategy using reasoning, evidence, numbers, or a clear thesis. |
+| `market_reaction_or_hype` | Primarily an emotional reaction to market movement — hype, celebration, panic, or encouragement to buy/hold/sell, without substantial analysis. |
+| `meme_or_shitpost` | Primarily humor, sarcasm, slang, or absurdity for entertainment rather than serious trading discussion. |
+| `community_meta_or_news` | Primarily about the subreddit, moderation, daily threads, media attention, rules, or external WSB news rather than a personal trade. |
 
 ---
 
@@ -71,14 +73,15 @@ _TODO_
 
 ### Confusion matrix (fine-tuned DistilBERT)
 
-<!-- TODO: Replace placeholder labels/values with your actual results.
+<!-- TODO: Replace _TODO_ counts with your actual results.
      Rows = true label, columns = predicted label. -->
 
-| true \ pred | class_a | class_b | class_c |
-|-------------|---------|---------|---------|
-| **class_a** | _TODO_  | _TODO_  | _TODO_  |
-| **class_b** | _TODO_  | _TODO_  | _TODO_  |
-| **class_c** | _TODO_  | _TODO_  | _TODO_  |
+| true \ pred | trade_analysis | market_reaction_or_hype | meme_or_shitpost | community_meta_or_news |
+|-------------|---------|---------|---------|---------|
+| **trade_analysis** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
+| **market_reaction_or_hype** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
+| **meme_or_shitpost** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
+| **community_meta_or_news** | _TODO_ | _TODO_ | _TODO_ | _TODO_ |
 
 ### Discussion
 
@@ -138,16 +141,17 @@ _TODO: add specifics._
 
 ```
 TakeMeter/
-├── planning.md              # required planning sections (your work)
+├── planning.md              # planning spec (your work)
 ├── README.md                # this file
 ├── CLAUDE.md                # project rules for AI sessions
 ├── requirements-local.txt   # deps for local tooling (no GPU)
-├── .env.example             # copy to .env, add API keys
+├── .env.example             # copy to .env, add GROQ_API_KEY
 ├── data/
 │   ├── dataset_template.csv # column template: text,label,notes
-│   └── dataset.csv          # collected (API) + annotated (you) data
+│   ├── reddit_wsb.csv       # the downloaded public WSB dataset (~53k rows)
+│   └── dataset.csv          # cleaned + sampled, label BLANK for you to annotate
 └── scripts/
-    ├── collect_reddit.py    # fetch PUBLIC r/anime text via official Reddit API
+    ├── clean_wsb.py         # clean/sample reddit_wsb.csv -> dataset.csv (no labels)
     ├── validate_dataset.py  # pre-Colab dataset sanity check (no GPU)
     └── baseline_groq.py     # local zero-shot Groq baseline (no GPU)
 ```
@@ -157,27 +161,26 @@ TakeMeter/
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-local.txt
-cp .env.example .env        # then add GROQ_API_KEY + REDDIT_* credentials
+cp .env.example .env        # then add GROQ_API_KEY
 ```
 
-### 1. Collect text (official Reddit API — not scraping)
+### 1. Clean + sample the downloaded WSB dataset
 
-Uses Reddit's sanctioned API to fetch **public** r/anime posts/comments into
-`data/dataset.csv` with the `label` column left blank. Create a free "script"
-app at <https://www.reddit.com/prefs/apps>, put the credentials in `.env`, then:
+Put the downloaded public dataset at `data/reddit_wsb.csv`, then build a cleaned,
+deduped pool with `text = title + body` and the `label` column **left blank** for
+you to annotate:
 
 ```bash
-python scripts/collect_reddit.py --submissions --comments --per-source 80
+python scripts/clean_wsb.py --in data/reddit_wsb.csv --out data/dataset.csv --sample 300
 ```
 
-Fetching only retrieves text + permalinks; it does **not** label anything.
-Annotation is your work and stays within Reddit's API terms of use.
+Cleaning only formats/filters real rows — it does **not** assign labels.
 
 ### 2. Annotate, validate, baseline
 
 ```bash
-# Open data/dataset.csv and fill the `label` column with one of your 3 labels
-# (planning.md §2). Then validate before uploading to Colab:
+# Open data/dataset.csv and fill the `label` column with one of your 4 labels
+# (planning.md §3). Then validate before uploading to Colab:
 python scripts/validate_dataset.py data/dataset.csv
 
 # Run the zero-shot baseline locally (after filling in SYSTEM_PROMPT):

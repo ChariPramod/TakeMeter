@@ -9,24 +9,10 @@ A fine-tuned **DistilBERT** classifier that scores **discourse quality** in an
 online community, compared against a zero-shot **Groq `llama-3.3-70b-versatile`**
 baseline.
 
-**Community:** r/anime. **Taxonomy:** 3 labels (defined by the student in
-`planning.md` §2 — do not invent them). These are the student's design choices,
-recorded here only as project context.
-
-## HARD RULE — no fabrication, no doing the student's intellectual work
-
-Do **not**, under any circumstances:
-- invent or suggest specific **labels** / a label taxonomy
-- **fabricate, generate, or scrape** posts or any dataset rows
-- write the **analysis, evaluation writeup, or reflections**
-- write the baseline **system prompt** (the classification instructions)
-
-Label design, data collection, annotation, the system prompt, and all
-writeups/reflections are **the student's own work**. Wherever a decision belongs
-to the student, leave a clearly marked `TODO` placeholder — never a guess
-presented as an answer.
-
-Your role is **scaffolding, tooling, and validation** only.
+**Community:** r/wallstreetbets. **Taxonomy:** 4 labels (defined by the student
+in `planning.md` §3 — do not invent them). Data source is a downloaded public
+WSB post dataset (~53k rows); the student annotates a balanced sample. These are
+the student's design choices, recorded here only as project context.
 
 ## GPU / Colab constraint
 
