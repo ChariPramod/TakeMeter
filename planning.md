@@ -10,44 +10,88 @@
 
 ---
 
-## 1. Community
+## 1. Community  — Milestone 1
 
-<!-- TODO: Which online community are you classifying discourse from?
-     Name it, link it, and explain why it's a good fit:
-     - Is the discourse varied enough to be interesting to classify?
-     - Are posts publicly available and OK to collect per the source's terms?
-     - Roughly how active is it / how many posts can you realistically gather? -->
+**Community:** r/anime (general anime subreddit)
 
-_TODO: describe the community here._
+<!-- TODO (Milestone 1, ~2-3 sentences — YOUR words):
+     - Name + link the community (https://www.reddit.com/r/anime/).
+     - Why is its discourse a good fit? r/anime mixes episode-discussion
+       reactions, recommendation threads, news, and deeper critique — so
+       "quality of discourse" varies a lot, which is what makes it classifiable.
+     - Confirm you can collect 200+ PUBLIC posts/comments and that doing so is
+       allowed (read Reddit's terms / use the official API or manual copy;
+       no scraping, no fabrication).
+     - Roughly how active / how much can you realistically gather?
 
----
+     Checkpoint reminder: before you finalize labels, READ 30-40 real r/anime
+     posts and note the patterns you actually see. Don't design from memory. -->
 
-## 2. Labels
-
-<!-- TODO: Define your label taxonomy for "discourse quality."
-     For EACH label give:
-     - the exact label string (this must match LABEL_MAP in validate_dataset.py)
-     - a one-sentence definition
-     - 1-2 short illustrative descriptions (in your own words; do NOT paste
-       fabricated example posts)
-     Keep the set small and mutually exclusive enough to annotate consistently. -->
-
-_TODO: list your labels and their definitions here._
+_TODO: write your 2-3 sentence community description here._
 
 ---
 
-## 3. Hard edge cases
+## 2. Labels  — Milestone 1 (3 labels)
 
-<!-- TODO: List the cases that are genuinely hard to label and explain how you
-     will decide them. Examples of *kinds* of edge cases to think about
-     (not answers — your call):
-     - sarcasm / irony that flips intent
-     - short low-effort posts vs. concise good ones
-     - off-topic but high-quality
-     - quoting bad content to criticize it
-     Write your tie-breaking rules so annotation stays consistent. -->
+> Required properties (verify each holds): **mutually exclusive** (a post fits
+> exactly one), **exhaustive enough** (you can label ≥90% with no catch-all
+> "other"), and **grounded in r/anime norms** (the distinction matters to people
+> who actually post there). Aim for **≥20% of examples per label**.
+>
+> Label strings here MUST match `LABEL_MAP` in `scripts/validate_dataset.py`,
+> the README taxonomy table, and the Colab notebook.
 
-_TODO: enumerate edge cases and your tie-breaking rules here._
+### Label 1 — `TODO_label_1`
+- **One-sentence definition:** _TODO_
+- **Clear example A (a real-ish post in your own words):** _TODO_
+- **Clear example B:** _TODO_
+- **An uncertain case (a post you're NOT sure belongs here):** _TODO — this one
+  matters most; it forces you to sharpen the boundary._
+
+### Label 2 — `TODO_label_2`
+- **One-sentence definition:** _TODO_
+- **Clear example A:** _TODO_
+- **Clear example B:** _TODO_
+- **An uncertain case:** _TODO_
+
+### Label 3 — `TODO_label_3`
+- **One-sentence definition:** _TODO_
+- **Clear example A:** _TODO_
+- **Clear example B:** _TODO_
+- **An uncertain case:** _TODO_
+
+<!-- Mutual-exclusivity check (do this, write the answer):
+     Pick ~5 random r/anime posts. Can you assign each to exactly ONE label
+     without ambiguity most of the time? If two labels keep overlapping, merge
+     them or redefine the boundary, then update the blocks above. -->
+
+**Mutual-exclusivity self-check result:** _TODO_
+
+---
+
+## 3. Hard edge cases  — Milestone 1 checkpoint
+
+> The checkpoint requires you to name the **single hardest** edge case — a post
+> type that genuinely sits between two of your labels — and state the **decision
+> rule** you'll use so annotation stays consistent. Find one such REAL post in
+> r/anime before you commit to your labels.
+
+### Hardest edge case (required)
+- **The post / post type:** _TODO — describe a real borderline r/anime post._
+- **Which two labels it could belong to:** _TODO_
+- **Your decision rule (one sentence that resolves it):** _TODO_
+- **How you'd label THIS post under that rule, and why:** _TODO_
+
+### Other edge cases + tie-breaking rules (optional but recommended)
+<!-- Kinds to think about for an anime community (these are prompts, not answers):
+     - sarcasm / ironic praise that flips intent
+     - short low-effort hype vs. a concise but substantive take
+     - spoiler-tagged analysis vs. plain reaction
+     - "peak fiction" / meme one-liners
+     - quoting a bad take to criticize it
+     - off-topic but high-effort (e.g., production/industry tangents) -->
+
+_TODO: list any other edge cases and how you'll decide them._
 
 ---
 

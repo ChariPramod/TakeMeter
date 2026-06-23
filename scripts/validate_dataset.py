@@ -18,18 +18,20 @@ import sys
 import pandas as pd
 
 # ---------------------------------------------------------------------------
-# TODO (student): define your label taxonomy here.
+# TODO (student): define your r/anime label taxonomy here (3 labels — see
+# planning.md §2 for the definitions/examples you write).
 # Keys = the EXACT label strings that appear in the CSV's `label` column.
-# Values = the integer class id used by the model (0..N-1, contiguous).
+# Values = the integer class id used by the model (0, 1, 2 — contiguous).
 # This MUST match the labels in planning.md, the README, and the Colab notebook.
 #
-# Example shape only (replace with YOUR labels — do not ship these):
+# Shape only (replace the keys with YOUR three r/anime labels — do not ship these
+# placeholder names):
 #   LABEL_MAP = {
-#       "your_label_a": 0,
-#       "your_label_b": 1,
-#       "your_label_c": 2,
+#       "TODO_label_1": 0,
+#       "TODO_label_2": 1,
+#       "TODO_label_3": 2,
 #   }
-LABEL_MAP = {}  # TODO: fill in
+LABEL_MAP = {}  # TODO: fill in your 3 r/anime labels
 # ---------------------------------------------------------------------------
 
 # Tunable thresholds for warnings.

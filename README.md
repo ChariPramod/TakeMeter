@@ -23,8 +23,10 @@ _TODO_
 
 ## Data collection
 
-<!-- TODO: Where the data came from, how you collected and annotated it, and the
-     final per-class + total counts. (Plan lives in planning.md §4.) -->
+<!-- TODO: Where the data came from (r/anime — link + collection method), how you
+     collected and annotated it, the final per-class + total counts, AND at least
+     3 examples you found genuinely difficult to label and what you decided.
+     (Plan lives in planning.md §4; hardest edge case in §3.) -->
 
 _TODO_
 
@@ -32,13 +34,16 @@ _TODO_
 
 ## Label taxonomy
 
-<!-- TODO: The final labels and their definitions. These must match LABEL_MAP in
-     scripts/validate_dataset.py and the notebook. -->
+Community: **r/anime**. Three labels (see [planning.md](planning.md) §2 for full
+definitions, examples, and the edge-case decision rule). These must match
+`LABEL_MAP` in [scripts/validate_dataset.py](scripts/validate_dataset.py) and the
+Colab notebook.
 
 | Label | Definition |
 |-------|------------|
-| _TODO_ | _TODO_ |
-| _TODO_ | _TODO_ |
+| _TODO_label_1_ | _TODO_ |
+| _TODO_label_2_ | _TODO_ |
+| _TODO_label_3_ | _TODO_ |
 
 ---
 

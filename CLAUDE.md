@@ -9,6 +9,10 @@ A fine-tuned **DistilBERT** classifier that scores **discourse quality** in an
 online community, compared against a zero-shot **Groq `llama-3.3-70b-versatile`**
 baseline.
 
+**Community:** r/anime. **Taxonomy:** 3 labels (defined by the student in
+`planning.md` §2 — do not invent them). These are the student's design choices,
+recorded here only as project context.
+
 ## HARD RULE — no fabrication, no doing the student's intellectual work
 
 Do **not**, under any circumstances:
