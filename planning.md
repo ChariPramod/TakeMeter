@@ -110,17 +110,26 @@ _TODO: list any other edge cases and how you'll decide them._
 Must answer: **where** I collect, **how many per label**, and **what I do if a
 label is underrepresented after 200 examples.**
 
-- **Source + method:** _TODO — r/anime, via what? (official Reddit API / manual
-  copy / pushshift-style export within terms). No scraping, no fabrication._
-- **Target counts:** _TODO — per-label target and total (≥200 total, aim ≥20%
-  per label so no class dominates). State the per-class number you're aiming for._
-- **Storage:** `data/dataset.csv` with columns `text,label,notes`. _(`notes`
-  also records pre-labeling provenance — see AI Tool Plan §Annotation.)_
-- **Annotation process:** _TODO — who labels, in what order, against which
-  definitions (link §2), and how you keep yourself consistent over 200 rows._
-- **Underrepresentation contingency (required):** _TODO — concrete plan if a
-  label is <20% after 200, e.g. "targeted collection from <which threads> until
-  each class ≥ N," or "merge/redefine labels per §2." Decide the rule now._
+- **Source + method:** r/anime (https://www.reddit.com/r/anime/). _TODO —
+  confirm your exact collection method (official Reddit API via a registered app,
+  or manual copy of public posts/comments) and that it respects Reddit's terms.
+  No automated scraping, no fabricated rows._
+- **Target counts:** **300 examples total, ~100 per label** across 3 classes.
+  This is well above the 200 minimum and keeps every class far above the 20%
+  floor, with buffer for rows dropped during validation (empty/duplicate/short).
+- **Storage:** `data/dataset.csv` with columns `text,label,notes`. The `notes`
+  column also records pre-labeling provenance — see AI Tool Plan §B.
+- **Annotation process:** _TODO — label against the §2 definitions; with the
+  pre-label-and-review workflow (§B), the LLM proposes a label, I confirm or
+  override every row, and the final label is my judgment. Note how you stay
+  consistent across 300 rows (e.g. re-read definitions periodically; revisit any
+  row you hesitate on)._
+- **Underrepresentation contingency:** if any class is below the 20% floor
+  (i.e. < 60 rows) after the first pass, do **targeted collection** — pull
+  additional posts from thread types known to produce that class until it reaches
+  ~100 — rather than down-sampling the others. If a class stays hard to fill, it
+  is a signal the boundary in §2 is wrong; merge/redefine per §2 instead of
+  forcing thin data. _TODO: confirm which thread types you'll target for top-up._
 
 ---
 
@@ -129,17 +138,27 @@ label is underrepresented after 200 examples.**
 Must answer: **which metrics, and why they're right for THIS task.** Accuracy
 alone is not enough — say what else and why.
 
-- **Primary metric(s):** _TODO — e.g. macro-F1. Justify: with 3 classes and
-  possible imbalance, why does this metric reflect success better than raw
-  accuracy for r/anime discourse?_
-- **Per-class metric (required):** _TODO — precision/recall/F1 per label, and
-  which class's recall/precision you care most about and why._
-- **Confusion matrix:** _TODO — which specific confusion you expect and will
-  inspect (e.g. label_X ↔ label_Y) and what that confusion would mean._
-- **Baseline handling:** _TODO — how you treat unparseable Groq outputs (the
-  local/Colab baseline excludes them and reports the count; state your stance)._
-- **Same test set:** both models evaluated on the identical seeded test split
-  (stratified 70/15/15, `random_state=42`) — see `scripts/baseline_groq.py`.
+- **Primary metric: macro-F1.** Averaging F1 equally across the three classes
+  (rather than weighting by frequency) means a class that drifts below the 20%
+  floor still counts fully toward the score. Raw accuracy can look high while
+  one r/anime discourse type is barely recognized, so accuracy alone would hide
+  exactly the failure I care about; macro-F1 won't.
+- **Per-class precision / recall / F1 (required).** Reported for every label so
+  I can see *which* class the model handles worst — not just an aggregate. I care
+  most about **recall on the minority/most-confused class** (it's the one most
+  likely to be silently dropped). _TODO: name which of your 3 labels you most
+  want high recall on, once defined._
+- **Confusion matrix.** 3×3, true (rows) × predicted (cols). I'll inspect which
+  specific pair gets confused; a heavy off-diagonal between two labels means
+  their §2 boundary is blurry in practice. _TODO: name the pair you expect to be
+  most confused, given your definitions._
+- **Baseline handling:** unparseable Groq outputs are **excluded from the metric
+  and reported as a separate count** (the local/Colab harness already does this).
+  A high unparseable count is itself a finding about the zero-shot prompt, so I
+  report it rather than silently dropping it.
+- **Same test set:** both models are evaluated on the identical seeded test split
+  (stratified 70/15/15, `random_state=42`) — see `scripts/baseline_groq.py`,
+  which reproduces the notebook's split exactly so local == Colab.
 
 ---
 
@@ -148,15 +167,20 @@ alone is not enough — say what else and why.
 Must state a **specific, objectively checkable threshold** — not "it should work
 well." At the end I should be able to say yes/no against these.
 
-- **Quantitative bar:** _TODO — e.g. "fine-tuned macro-F1 ≥ 0.__ AND beats the
-  Groq baseline by ≥ __ points on macro-F1." Pick real numbers._
-- **Per-class floor:** _TODO — e.g. "no class below __ recall," so success isn't
-  carried by one easy class._
-- **"Good enough to deploy" bar:** _TODO — what performance would make this
-  genuinely useful as a real r/anime community tool? Qualitative is fine here,
-  but tie it to the numbers above._
-- **Self-check:** are these specific enough to objectively pass/fail at the end?
-  _TODO: yes/no + why._
+- **Quantitative bar:** the fine-tuned model reaches **macro-F1 ≥ 0.70** on the
+  test set **AND** beats the zero-shot Groq baseline by **≥ 0.05 macro-F1**.
+- **Per-class floor:** **no class has recall < 0.55**, so success can't be
+  carried by one easy class while another is effectively ignored.
+- **"Good enough to deploy" bar:** at macro-F1 ≥ 0.70 with no collapsed class,
+  the classifier is useful as an *assistive* signal in a real r/anime tool (e.g.
+  flagging/sorting discourse types for a human), not as a fully automated
+  moderator — three-way subjective discourse labeling on ~300 examples won't be
+  reliable enough to act on without review, and the success bar reflects that.
+- **Self-check — are these objectively pass/fail?** Yes. Each clause is a number
+  the evaluation in §5 produces directly (macro-F1, the baseline delta, and the
+  minimum per-class recall), so at the end I can mark each as met/not-met without
+  judgment calls. _(I may tighten these after seeing the baseline numbers, and
+  will note any change here.)_
 
 ---
 
