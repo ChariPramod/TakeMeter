@@ -142,11 +142,12 @@ TakeMeter/
 ├── README.md                # this file
 ├── CLAUDE.md                # project rules for AI sessions
 ├── requirements-local.txt   # deps for local tooling (no GPU)
-├── .env.example             # copy to .env, add GROQ_API_KEY
+├── .env.example             # copy to .env, add API keys
 ├── data/
 │   ├── dataset_template.csv # column template: text,label,notes
-│   └── dataset.csv          # YOUR collected/annotated data (you create this)
+│   └── dataset.csv          # collected (API) + annotated (you) data
 └── scripts/
+    ├── collect_reddit.py    # fetch PUBLIC r/anime text via official Reddit API
     ├── validate_dataset.py  # pre-Colab dataset sanity check (no GPU)
     └── baseline_groq.py     # local zero-shot Groq baseline (no GPU)
 ```
@@ -156,9 +157,27 @@ TakeMeter/
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-local.txt
-cp .env.example .env        # then add your GROQ_API_KEY
+cp .env.example .env        # then add GROQ_API_KEY + REDDIT_* credentials
+```
 
-# Validate your dataset before uploading to Colab:
+### 1. Collect text (official Reddit API — not scraping)
+
+Uses Reddit's sanctioned API to fetch **public** r/anime posts/comments into
+`data/dataset.csv` with the `label` column left blank. Create a free "script"
+app at <https://www.reddit.com/prefs/apps>, put the credentials in `.env`, then:
+
+```bash
+python scripts/collect_reddit.py --submissions --comments --per-source 80
+```
+
+Fetching only retrieves text + permalinks; it does **not** label anything.
+Annotation is your work and stays within Reddit's API terms of use.
+
+### 2. Annotate, validate, baseline
+
+```bash
+# Open data/dataset.csv and fill the `label` column with one of your 3 labels
+# (planning.md §2). Then validate before uploading to Colab:
 python scripts/validate_dataset.py data/dataset.csv
 
 # Run the zero-shot baseline locally (after filling in SYSTEM_PROMPT):
