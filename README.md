@@ -35,28 +35,36 @@ sampled into `data/dataset.csv` with
 [scripts/clean_wsb.py](scripts/clean_wsb.py) (`text = title + body`, deduped,
 seeded sample); see [Local setup](#local-setup).
 
-**Annotation.** _TODO: describe how you labeled — read each post against the
-planning.md §3 definitions; note whether you used LLM pre-labeling with review
-(disclose in [AI usage](#ai-usage) if so)._
+**Annotation.** Each row was read and labeled against the [planning.md](planning.md)
+§3 definitions. Started from a 300-row random sample; two thin classes were then
+topped up by surfacing keyword candidates (planning §6 contingency) and labeling
+those by hand — keyword search only *found* candidates, it never assigned labels.
+_TODO: note whether any LLM pre-labeling was used; disclose in [AI usage](#ai-usage) if so._
 
-**Final label distribution** (fill from `validate_dataset.py` output):
+**Final label distribution** (437 rows; verified with `validate_dataset.py`, no
+single label > 70%):
 
-| Label | Count |
-|-------|------:|
-| `trade_analysis` | _TODO_ |
-| `market_reaction_or_hype` | _TODO_ |
-| `meme_or_shitpost` | _TODO_ |
-| `community_meta_or_news` | _TODO_ |
-| **Total** | _TODO (≥200)_ |
+| Label | Count | Share |
+|-------|------:|------:|
+| `market_reaction_or_hype` | 163 | 37.3% |
+| `trade_analysis` | 113 | 25.9% |
+| `community_meta_or_news` | 108 | 24.7% |
+| `meme_or_shitpost` | 53 | 12.1% |
+| **Total** | **437** | 100% |
 
-<!-- Checkpoint: no single label > 70% of the dataset. -->
+`meme_or_shitpost` is the smallest class — genuine memes are rarer in WSB than
+hype — so its per-class metrics are the least certain; this is noted in the
+evaluation discussion.
 
-**3 genuinely difficult examples** (full list of edge cases in
+**3 genuinely difficult examples** (full detail + decision rules in
 [planning.md](planning.md) §5):
 
-1. _TODO: the post (excerpt), which two labels it sat between, what you decided & why._
-2. _TODO_
-3. _TODO_
+1. **"Marble ETF" post** (`o64enf`) — DD *structure* but intentionally absurd
+   method → `meme_or_shitpost` (a real ticker/DD format doesn't make it analysis).
+2. **GME/AMC float-ownership squeeze math** (`mcf7u1`) — rough numbers + a
+   concrete market mechanism, despite "hold forever" tone → `trade_analysis`.
+3. **AMD YOLO update** (`lgx0fn`) — real positions but the body is comedic
+   performance, not reasoning → `meme_or_shitpost`.
 
 ---
 
