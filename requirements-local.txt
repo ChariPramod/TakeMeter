@@ -1,0 +1,5 @@
+# Local tooling only (no GPU). Fine-tuning deps live in the Colab notebook.
+pandas
+scikit-learn
+groq
+python-dotenv

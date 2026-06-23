@@ -1,0 +1,37 @@
+# Secrets
+.env
+.env.local
+
+# Model checkpoints / fine-tuning artifacts
+*.bin
+*.safetensors
+*.pt
+*.ckpt
+checkpoints/
+checkpoint-*/
+runs/
+wandb/
+model/
+models/
+outputs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# Jupyter / Colab
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local Claude Code settings
+.claude/settings.local.json
